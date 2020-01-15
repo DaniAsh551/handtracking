@@ -7,14 +7,27 @@ import time
 from utils.detector_utils import WebcamVideoStream
 import datetime
 import argparse
+import json
+import socket
+import sys
+import numpy as np
+
+settings_file = open('settings.json', 'r')
+settings = json.loads(settings_file.read())
+
+
+server_address = settings['server']['address']
+server_port = settings['server']['port']
+client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+connect_err = client.connect_ex((server_address, server_port))
 
 frame_processed = 0
 score_thresh = 0.2
 
+
 # Create a worker thread that loads graph and
 # does detection on images in an input queue and puts it on an output queue
-
-
 def worker(input_q, output_q, cap_params, frame_processed):
     print(">> loading frozen model for worker")
     detection_graph, sess = detector_utils.load_inference_graph()
@@ -37,8 +50,20 @@ def worker(input_q, output_q, cap_params, frame_processed):
             # add frame annotated with bounding box to queue
             output_q.put(frame)
             frame_processed += 1
+
+            bboxes = boxes[scores > cap_params["score_thresh"]]
+
+            im_width, im_height = (cap_params['im_width'], cap_params['im_height'])
+            for box in bboxes:
+                ymin, xmin, ymax, xmax = box
+                mapped_box = [xmin * im_width, xmax * im_width, ymin * im_height, ymax * im_height]
+                box_string = str(mapped_box[0]) + ',' + str(mapped_box[1]) + ',' + str(mapped_box[2]) + ',' + str(mapped_box[3]) 
+                client.sendall(str.encode( 'T|' + box_string + '\n'))
+                print('Sending detection: ' + box_string)
+                    
         else:
             output_q.put(frame)
+        
     sess.close()
 
 
@@ -169,3 +194,4 @@ if __name__ == '__main__':
     pool.terminate()
     video_capture.stop()
     cv2.destroyAllWindows()
+    client.close()
