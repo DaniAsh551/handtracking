@@ -55,9 +55,9 @@ def worker(input_q, output_q, cap_params, frame_processed):
 
             im_width, im_height = (cap_params['im_width'], cap_params['im_height'])
             for box in bboxes:
-                ymin, xmin, ymax, xmax = box
-                mapped_box = [xmin * im_width, xmax * im_width, ymin * im_height, ymax * im_height]
-                box_string = str(mapped_box[0]) + ',' + str(mapped_box[1]) + ',' + str(mapped_box[2]) + ',' + str(mapped_box[3]) 
+                #ymin, xmin, ymax, xmax = box
+                #mapped_box = [xmin * im_width, xmax * im_width, ymin * im_height, ymax * im_height]
+                box_string = str(box[0]) + ',' + str(box[1]) + ',' + str(box[2]) + ',' + str(box[3]) 
                 client.sendall(str.encode( 'T|' + box_string + '\n'))
                 print('Sending detection: ' + box_string)
                     
