@@ -11,6 +11,7 @@ import json
 import socket
 import sys
 import numpy as np
+import threading
 
 settings_file = open('settings.json', 'r')
 settings = json.loads(settings_file.read())
@@ -25,6 +26,20 @@ connect_err = client.connect_ex((server_address, server_port))
 frame_processed = 0
 score_thresh = 0.2
 
+# Create a thread to process boxes and send over TCP
+def process_boxes(boxes, scores):
+
+    #boxes = boxes_and_scores[0]
+    #scores = boxes_and_scores[1]
+    bboxes = boxes[scores > cap_params["score_thresh"]]
+
+    #im_width, im_height = (cap_params['im_width'], cap_params['im_height'])
+    for box in bboxes:
+        #ymin, xmin, ymax, xmax = box
+        #mapped_box = [xmin * im_width, xmax * im_width, ymin * im_height, ymax * im_height]
+        box_string = str(box[1]) + ',' + str(box[0]) + ',' + str(box[3]) + ',' + str(box[2]) 
+        client.sendall(str.encode( 'T|' + box_string + '\n'))
+        print('Sending detection: ' + box_string)
 
 # Create a worker thread that loads graph and
 # does detection on images in an input queue and puts it on an output queue
@@ -51,15 +66,7 @@ def worker(input_q, output_q, cap_params, frame_processed):
             output_q.put(frame)
             frame_processed += 1
 
-            bboxes = boxes[scores > cap_params["score_thresh"]]
-
-            #im_width, im_height = (cap_params['im_width'], cap_params['im_height'])
-            for box in bboxes:
-                #ymin, xmin, ymax, xmax = box
-                #mapped_box = [xmin * im_width, xmax * im_width, ymin * im_height, ymax * im_height]
-                box_string = str(box[1]) + ',' + str(box[0]) + ',' + str(box[3]) + ',' + str(box[2]) 
-                client.sendall(str.encode( 'T|' + box_string + '\n'))
-                print('Sending detection: ' + box_string)
+            threading.Thread(target=process_boxes, args=(boxes, scores)).start()
                     
         else:
             output_q.put(frame)
