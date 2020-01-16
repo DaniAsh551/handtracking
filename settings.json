@@ -1,6 +1,6 @@
 {
     "server": {
-        "address": "pc",
+        "address": "localhost",
         "port": 9002
     }
 }

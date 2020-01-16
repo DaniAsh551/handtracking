@@ -53,11 +53,11 @@ def worker(input_q, output_q, cap_params, frame_processed):
 
             bboxes = boxes[scores > cap_params["score_thresh"]]
 
-            im_width, im_height = (cap_params['im_width'], cap_params['im_height'])
+            #im_width, im_height = (cap_params['im_width'], cap_params['im_height'])
             for box in bboxes:
                 #ymin, xmin, ymax, xmax = box
                 #mapped_box = [xmin * im_width, xmax * im_width, ymin * im_height, ymax * im_height]
-                box_string = str(box[0]) + ',' + str(box[1]) + ',' + str(box[2]) + ',' + str(box[3]) 
+                box_string = str(box[1]) + ',' + str(box[0]) + ',' + str(box[3]) + ',' + str(box[2]) 
                 client.sendall(str.encode( 'T|' + box_string + '\n'))
                 print('Sending detection: ' + box_string)
                     
